@@ -1,0 +1,20 @@
+{
+  "name": "cloudant-redis-cache",
+  "version": "1.0.0",
+  "description": "Demo web app that combines IBM Cloudant with IBM Redis for faster perfromance and cost savings",
+  "author": "Daniel Mermelstein (danmermel@gmail.com)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "standard": "standard --fix"
+  },
+  "dependencies": {
+    "@ibm-cloud/cloudant": "^0.0.16",
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "redis": "^3.1.2"
+  },
+  "devDependencies": {
+    "standard": "^16.0.3"
+  }
+}
