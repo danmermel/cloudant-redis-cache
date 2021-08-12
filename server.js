@@ -21,9 +21,14 @@ const cert = fs.readFileSync('redis.cert', { 'encoding': 'ascii' })
 
 const redisClient = redis.createClient(url, { tls: { ca: cert } })
 
+// redis does not support Promises yet. So using promisify to help there
+const { promisify } = require("util");
+const redisGet = promisify(redisClient.get).bind(redisClient);
+const redisSet = promisify(redisClient.setex).bind(redisClient);
+const redisFlush = promisify(redisClient.flushall).bind(redisClient);
 
 
-const DESIGN_DOC = 'fruitCounter'
+const DESIGN_DOC = 'teamCounter'
 
 // the express app with:
 // - static middleware serving out the 'public' directory as a static website
@@ -66,7 +71,8 @@ const createDesignDoc = async function () {
     })
 
     //now load the test data in bulk
-    const bulkDocs = fs.readFileSync("directorydata.json", {encoding:"utf8"})
+    console.log("Uploading test data... ")
+    const bulkDocs = fs.readFileSync("directorydata.json", { encoding: "utf8" })
 
     await client.postBulkDocs({
       db: DBNAME,
@@ -76,33 +82,47 @@ const createDesignDoc = async function () {
 }
 createDesignDoc()
 
+app.post('/flush', async (req, res) => {
+  await redisFlush()
+  console.log("cache is flushed!")
+  res.send({ok:true})
+}),
 
-// // respond to POST requests to the /fruit endpoint
-// app.post('/fruit', async (req, res) => {
-//   // extract the chosen fruit from the POSted body
-//   const fruit = req.body.fruit
 
-//   // build the document to save to Cloudant
-//   const fruitDocument = {
-//     fruit: fruit,
-//     timestamp: new Date().toISOString()
-//   }
+// respond to POST requests to the /team endpoint
+app.post('/team', async (req, res) => {
+  // extract the chosen team from the POSted body
+  const team = req.body.team
+  console.log(team)
+  console.log(req.body)
+  let retval
+  let cache=false
 
-//   // Save the document in the database
-//   await client.postDocument({
-//     db: DBNAME,
-//     document: fruitDocument
-//   })
-
-//   // now retrieve totals using a MapReduce view
-//   const totals = await client.postView({
-//     db: DBNAME,
-//     ddoc: DESIGN_DOC,
-//     view: 'test',
-//     group: true
-//   })
-//   res.send({ totals: totals.result.rows })
-// })
+  //first check the cache
+  retval = await redisGet(team)
+  if (retval) {
+    console.log("Got from cache")
+    retval = JSON.parse(retval)
+    cache = true
+  }
+  else {
+    //  retrieve from Cloudant using a MapReduce view
+    console.log("fetching from Cloudant")
+    retval = await client.postView({
+      db: DBNAME,
+      ddoc: DESIGN_DOC,
+      view: 'test',
+      key: team,
+      include_docs: true,
+      limit: 50,
+      reduce: false
+    })
+    //save to the cache
+    await redisSet(team, 15, JSON.stringify(retval))
+  }
+  res.send({ data: retval,
+             cache: cache})
+})
 
 // start the webserver
 app.listen(PORT, HOST)

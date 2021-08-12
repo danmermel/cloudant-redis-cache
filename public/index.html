@@ -12,46 +12,12 @@
 <body>
   <v-app id="app">
     <v-main>
-      <v-card class="mx-auto" max-width="500" v-if="!fruitSubmitted">
-        <v-card-title>Welcome to the Fruit Picker</v-card-title>
-        <v-card-subtitle>Choose your favourite fruit. Submit your choice to see the global results.</v-card-subtitle>
-        <!-- form to collect chosen fruit -->
-        <v-radio-group v-model="chosenFruit">
-          <v-radio v-for="n in fruitList" :key="n" :label="n" :value="n"></v-radio>
-        </v-radio-group>
-        <!-- button to trigger saving of chosen fruit -->
-        <v-card-actions >
-          <v-btn :disabled="!chosenFruit" color="primary" large @click="onFruitSelect">
-            Save Fruit!
-          </v-btn>
-        </v-card-actions>
-      </v-card>
+      <v-btn v-for="colour in teamColour" :color="colour" @click="getTeam(colour)">Get {{ colour }} Team</v-btn>
+      <p>Results: {{ results }}</p>
+      <p>Elapsed Time: {{ elapsedTime }}</p>
 
-      <v-card class="mx-auto" max-width="500" v-if="fruitSubmitted">
-        <!-- leaderboard of most popular fruits -->
-        <v-card-title>Leaderboard</v-card-title>
-        <v-card-subtitle>The fruit story so far</v-card-subtitle>
-        <v-simple-table>
-          <template v-slot:default>
-            <thead>
-              <tr>
-                <th class="text-left">
-                  Fruit
-                </th>
-                <th class="text-left">
-                  Votes
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in totals" :key="item.key"   >
-                <td>{{ item.key }}</td>
-                <td>{{ item.value }}</td>
-              </tr>
-            </tbody>
-          </template>
-        </v-simple-table>
-      </v-card>
+      <v-btn color="primary" @click="flushCache">Clear Cache</v-btn>
+
     </v-main>
 
   </v-app>
@@ -65,31 +31,41 @@
       el: '#app',
       vuetify: new Vuetify(),
       data: {
-        fruitList: ['Apple', 'Banana', 'Melon', 'Orange', 'Pear'],
-        chosenFruit: '',
-        fruitSubmitted: false,
-        totals: []
+        teamColour: ["red", "orange", "green", "blue", "yellow", "purple"],
+        results: null,
+        elapsedTime: 0
       },
       methods: {
-        onFruitSelect: async function () {
-          this.fruitSubmitted = true
-
+        flushCache: async function () {
           // calculate the URL of the server-side process
-          const url = window.location.origin + '/fruit'
+          const url = window.location.origin + '/flush'
 
-          // try posting to the /fruit endpoint to register a new data point
+          // try posting to the /flush endpoint try {
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          const data = await response.json();
+          
+
+        },
+        getTeam: async function (colour) {
+          // calculate the URL of the server-side process
+          const url = window.location.origin + '/team'
+
+          // try posting to the /team endpoint to fetch data
           try {
+            const before = new Date().getTime()
             const response = await fetch(url, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ fruit: this.chosenFruit })
+              body: JSON.stringify({ team: colour })
             });
             const data = await response.json();
-
-            // the response contains the current leaderboard which we store
-            // in the the 'this.totals' array for rendering in HTML
-            this.totals = data.totals
-            //console.log(this.totals)
+            const after = new Date().getTime()
+            this.elapsedTime = after - before
+            this.results = data
+            console.log(data)
           } catch (error) {
             // enter your logic for when there is an error (ex. error toast)
             console.log(error)
