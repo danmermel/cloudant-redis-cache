@@ -113,13 +113,14 @@ app.post('/team', async (req, res) => {
       ddoc: DESIGN_DOC,
       view: 'test',
       key: team,
-      include_docs: true,
-      limit: 50,
-      reduce: false
+      includeDocs: true,
+      reduce: false,
+      limit:10
     })
     //save to the cache
-    await redisSet(team, 15, JSON.stringify(retval))
+    await redisSet(team, 60, JSON.stringify(retval))
   }
+  console.log("size:",retval.result.rows.length)
   res.send({ data: retval,
              cache: cache})
 })
