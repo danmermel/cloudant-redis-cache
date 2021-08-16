@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <title>Welcome to the Fruit Selector</title>
+  <title>Welcome to Team Directory</title>
   <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
@@ -12,12 +12,49 @@
 <body>
   <v-app id="app">
     <v-main>
-      <v-btn v-for="colour in teamColour" :color="colour" @click="getTeam(colour)">Get {{ colour }} Team</v-btn>
-      <p>Results: {{ results }}</p>
-      <p>Elapsed Time: {{ elapsedTime }}</p>
+      <h2 class="mb-5" align="center" >Team Directory</h2>
 
-      <v-btn color="primary" @click="flushCache">Clear Cache</v-btn>
+      <v-row no-gutters>
+        <v-col v-for="colour in teamColour" :key="colour">
+          <v-card class="pa-2" outlined tile>
+            <v-btn :color="colour" @click="getTeam(colour)">Get {{ colour }} Team</v-btn>
+          </v-card>
+        </v-col>
+      </v-row>
+      <div v-if="results">
+        <v-card class="mt-5" max-width="500">
+          <v-simple-table dense>
+            <template v-slot:default>
+              <thead>
+                <tr>
+                  <th class="text-left" class="font-weight-bold">
+                    Name
+                  </th>
+                  <th class="text-left" class="font-weight-bold">
+                    Town
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="item in results.data.result.rows" :key="item.name">
+                  <td>{{ item.doc.name }}</td>
+                  <td>{{ item.doc.address.town }}</td>
+                </tr>
+              </tbody>
+            </template>
+          </v-simple-table>
+        </v-card>
+        <v-card class="mt-5" max-width="500">
+          <v-card-title>Cache info</v-card-title>
+          <v-card-text>Elapsed Time: {{ elapsedTime }}</v-card-text>
+          <v-card-text>Data from cache? {{ results.cache }}</v-card-text>
 
+          <v-card-actions>
+            <v-btn color="primary" @click="flushCache">Clear Cache</v-btn>
+          </v-card-actions>
+        </v-card>
+
+      </div>
     </v-main>
 
   </v-app>
@@ -38,6 +75,7 @@
       methods: {
         flushCache: async function () {
           // calculate the URL of the server-side process
+          this.results = null
           const url = window.location.origin + '/flush'
 
           // try posting to the /flush endpoint try {
@@ -46,7 +84,7 @@
             headers: { 'Content-Type': 'application/json' }
           });
           const data = await response.json();
-          
+
 
         },
         getTeam: async function (colour) {
@@ -65,7 +103,7 @@
             const after = new Date().getTime()
             this.elapsedTime = after - before
             this.results = data
-            console.log(data)
+            //console.log(data)
           } catch (error) {
             // enter your logic for when there is an error (ex. error toast)
             console.log(error)
