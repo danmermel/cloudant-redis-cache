@@ -46,8 +46,8 @@
         </v-card>
         <v-card class="mt-5" max-width="500">
           <v-card-title>Cache info</v-card-title>
-          <v-card-text>Elapsed Time: {{ elapsedTime }}</v-card-text>
-          <v-card-text>Data from cache? {{ results.cache }}</v-card-text>
+          <v-card-text>Elapsed Time: {{ elapsedTime }} ms</v-card-text>
+          <v-card-text>Data from Redis cache? {{ results.cache }}</v-card-text>
 
           <v-card-actions>
             <v-btn color="primary" @click="flushCache">Clear Cache</v-btn>
